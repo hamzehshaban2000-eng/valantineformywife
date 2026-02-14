@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>هدية فلنتاين</title>
+<style>
+body{
+  margin:0; min-height:100vh; background:pink;
+  display:flex; justify-content:center; align-items:center;
+  font-family:Arial,sans-serif; overflow:hidden;
+}
+#container{
+  width:460px; background:white; padding:25px 35px 35px;
+  border-radius:20px; box-shadow:0 5px 20px rgba(0,0,0,0.2);
+  text-align:center; position:relative; display:flex;
+  flex-direction:column; align-items:center;
+}
+#stage{font-size:22px; min-height:70px; margin-bottom:15px;}
+#buttons{display:flex; justify-content:center; gap:12px; flex-wrap:wrap;}
+button{
+  font-size:22px; padding:12px 26px; border:none;
+  border-radius:14px; cursor:pointer; opacity:0; transform:scale(0.8);
+  transition:transform 0.3s ease, opacity 0.4s ease;
+}
+.ok{background:#22c55e;color:white;}
+.escape{background:#ef4444;color:white;}
+.shake{display:inline-block; animation:shake 0.15s infinite;}
+@keyframes shake{
+  0%{transform:translate(2px,0);}
+  25%{transform:translate(-2px,0);}
+  50%{transform:translate(2px,0);}
+  75%{transform:translate(-2px,0);}
+  100%{transform:translate(2px,0);}
+}
+#startScreen,#introScreen,#angryOverlay{
+  width:100%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  position:absolute; top:0; left:0; height:100%;
+}
+#startScreen h2,#startScreen h1,
+#introScreen h2,#introScreen h1,
+#angryBox div{min-height:30px; margin:5px;}
+#angryOverlay{display:none; flex-direction:column; align-items:center; justify-content:center; color:white; font-size:22px; font-weight:800; z-index:999;}
+.heart{position:absolute; font-size:24px; top:-30px; animation:fall 3s linear infinite;}
+@keyframes fall{0%{top:-30px;}100%{top:500px;}}
+</style>
+</head>
+<body>
+<div id="container">  
+  <div id="startScreen"><h2 id="welcomeLabel"></h2>
+  <h1 id="gameTitle"></h1>
+  <button id="playBtn" class="ok">العب</button>
+  </div>  
+  <div id="introScreen" style="display:none;"><h2 id="introLabel"></h2>
+  <h1 id="introTitle"></h1>
+  <button id="understoodBtn" class="ok">فهمت</button>
+  </div>  
+  <div id="stage"></div>  
+  <div id="buttons"></div>  
+  <div id="angryOverlay"><div id="angryBox"></div></div>
+
+<audio id="type"><source src="https://www.soundjay.com/keyboard/keyboard-1.mp3"></audio>
+<audio id="drop"><source src="https://www.soundjay.com/water/sounds/water-drop-1.mp3"></audio>
+<audio id="impact"><source src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
+
+<script>
+const startScreen=document.getElementById("startScreen");
+const playBtn=document.getElementById("playBtn");
+const welcomeLabel=document.getElementById("welcomeLabel");
+const gameTitle=document.getElementById("gameTitle");
+const introScreen=document.getElementById("introScreen");
+const introLabel=document.getElementById("introLabel");
+const introTitle=document.getElementById("introTitle");
+const understoodBtn=document.getElementById("understoodBtn");
+const stageDiv=document.getElementById("stage");
+const buttonsDiv=document.getElementById("buttons");
+const typeSound=document.getElementById("type");
+const dropSound=document.getElementById("drop");
+const impactSound=document.getElementById("impact");
+const angryOverlay=document.getElementById("angryOverlay");
+const angryBox=document.getElementById("angryBox");
+
+let heartInterval;
+let slowMode = false;
+
+function createHeart(color){
+  const heart=document.createElement('div');
+  heart.textContent='❤️';
+  heart.style.color=color;
+  heart.className='heart';
+  heart.style.left=Math.random()*(window.innerWidth-30)+'px';
+  document.body.appendChild(heart);
+  setTimeout(()=>{heart.remove();},4000);
+}
+
+function startHearts(color){
+  heartInterval=setInterval(()=>createHeart(color),200);
+}
+
+function stopHearts(){clearInterval(heartInterval);}
+
+function typeText(el,text,callback,i=0){
+  if(i < text.length){
+    el.textContent += text[i];
+    typeSound.currentTime = 0; typeSound.play();
+    const speed = slowMode ? 120 : 40;
+    setTimeout(() => typeText(el, text, callback, i+1), speed);
+  } else {
+    if(text.includes('بحبك')){
+      document.body.style.background='pink';
+      document.getElementById('container').style.background='white';
+      stopHearts();
+      startHearts('red');
+    }
+    if(callback) callback();
+  }
+}
+
+let okScale=1;
+
+playBtn.style.opacity=0; playBtn.style.transform='scale(0.8)';
+typeText(welcomeLabel,'Welcome to',()=>{
+  typeText(gameTitle,'لعبة فلنتاين حموزي',()=>{
+    playBtn.style.opacity=1; playBtn.style.transform='scale(1)';
+  });
+});
+
+understoodBtn.style.opacity=0; understoodBtn.style.transform='scale(0.8)';
+
+playBtn.onclick=()=>{
+  startScreen.style.display='none'; introScreen.style.display='flex';
+  typeText(introLabel,'اهلا بك في لعبة حمزه والفلنتاين',()=>{
+    typeText(introTitle,'تذكر: لا ترفض حموز والا سيغضب هل فهمت؟',()=>{
+      understoodBtn.style.opacity=1; understoodBtn.style.transform='scale(1)';
+    });
+  });
+};
+
+understoodBtn.onclick=()=>{ introScreen.style.display='none'; showStage(1); };
+
+const stages={
+  1:{text:'لارتي، ممكن تكوني الفلنتاين حقي؟ 😏🤭',buttons:[{t:'نعم 😍',n:10},{t:'يع لا 🤢',n:2}]},
+  2:{text:'متأكدة 😒؟',buttons:[{t:'لا 😅',n:1},{t:'اي 🙄',n:3}]},
+  3:{text:'اها 😒',buttons:[{t:'شفيك؟ 😒',n:4}]},
+  4:{text:'والله ما سويت موقع كامل عشان اكل رفض 😒',buttons:[{t:'طيب طيب 😒',n:5}]},
+  5:{text:'يعني بتكوني الفلنتاين حقي 😍🤤',buttons:[{t:'اي 💖',n:10},{t:'لا 😒',n:6}]},
+  6:{text:'مهو غصب ترا ئي',buttons:[{t:'تتأمرش علي 🙄',n:7}]},
+  7:{text:'حاضر 🥺',buttons:[{t:'شطور 😏',n:8}]},
+  8:{text:'اكيد مطيعك انا 😋',buttons:[{t:'اي يلبى',n:9}]},
+  9:{text:'طيب الحين تبي تكوني الفلنتاين حقي 😁',buttons:[{t:'اي طبعا 💖',n:10},{t:'لا طبعا 😂',run:'angry1'}]},
+  10:{text:'يايي شكراً 💖 احبك اكثر شي بالدنيا\nاحبك يا احلى فلنتاين, رفيقة دربي وعمري 💖',buttons:[]},
+  11:{text:'لارا.. رح تتحملي نتيجه رفضك',buttons:[{t:'طيب اسفه',n:12}]},
+  12:{text:'مافي اسفه..اخترتي ترفضيني.. والحين لازم تهزميني',buttons:[{t:'بحبك',n:13}]},
+  13:{text:'لارا..خلص',buttons:[{t:'حبيبي بحبك اسفه',n:14}]},
+  14:{text:'...',buttons:[{t:'اسفه',n:15}]},
+  15:{text:'عادي',buttons:[{t:'رضيت؟',n:16}]},
+  16:{text:'اي',buttons:[{t:'بحبك',n:10}]}
+};
+
+function showStage(id){
+  stageDiv.textContent=''; buttonsDiv.innerHTML=''; okScale=1;
+  stageDiv.style.display='block'; buttonsDiv.style.display='flex';
+  typeText(stageDiv,stages[id].text,()=>{
+    stages[id].buttons.forEach(b=>{
+      const btn=document.createElement('button');
+      btn.textContent=b.t; 
+      btn.className=b.t.includes('بهرب')?'escape':'ok';
+      buttonsDiv.appendChild(btn);
+      setTimeout(()=>{btn.style.opacity=1; btn.style.transform='scale(1)';},100);
+
+      btn.onclick=()=>{
+        dropSound.currentTime=0; dropSound.play();
+        if(b.run==='angry1'){ 
+          startAngryScene(); 
+        } else {
+          if(b.t.includes('بحبك')) {
+            slowMode = true; 
+            document.body.style.background='pink';
+            document.getElementById('container').style.background='white';
+            stopHearts();
+            startHearts('red');
+          }
+          showStage(b.n);
+        }
+      };
+    });
+  });
+}
+
+// مرحلة الغضب
+function startAngryScene(){
+  slowMode = false;
+  stopHearts();
+  document.body.style.background='black';
+  document.getElementById('container').style.background='black';
+  stageDiv.style.display='none'; buttonsDiv.style.display='none';
+  angryBox.innerHTML='';
+  impactSound.currentTime=0; impactSound.play();
+
+  setTimeout(()=>{
+    document.body.style.background='red';
+    document.getElementById('container').style.background='red';
+    startHearts('black');
+
+    const lines=[
+      'وش سويتي!!!!!.. حكيتلك لا تعصبي حمز-',
+      'اسكت انت..',
+      'لارا..',
+      'حذرتك!!'
+    ];
+
+    lines.forEach((line,index)=>{
+      const p=document.createElement('div');
+      p.style.fontWeight='900';
+      p.style.fontSize=(line==='لارا..')?'28px':(line==='حذرتك!!')?'26px':'22px'; 
+      p.style.color='black'; 
+      p.style.margin='6px 0';
+      if(line==='حذرتك!!') p.classList.add('shake');
+      angryBox.appendChild(p);
+
+      setTimeout(()=>{
+        let i=0; 
+        function typeChar(){ 
+          if(i<line.length){ 
+            p.textContent+=line[i]; 
+            typeSound.currentTime=0; typeSound.play(); 
+            i++; 
+            setTimeout(typeChar,40);
+          }
+        } 
+        typeChar();
+      }, index*800);
+    });
+
+    const btn=document.createElement('button'); 
+    btn.textContent='حمزه..'; 
+    btn.className='ok'; 
+    btn.style.marginTop='12px'; 
+    angryBox.appendChild(btn);
+    setTimeout(()=>{btn.style.opacity=1; btn.style.transform='scale(1)';},4000);
+
+    btn.onclick=()=>{
+      angryOverlay.style.display='none'; 
+      stageDiv.style.display='block'; 
+      buttonsDiv.style.display='flex';
+      showStage(11); 
+    };
+
+    angryOverlay.style.display='flex';
+  },2000);
+}
+
+startHearts('red');
+</script>
+</body>
+</html>
